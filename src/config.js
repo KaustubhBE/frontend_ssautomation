@@ -1,6 +1,9 @@
 // Environment variables
 const isDevelopment = import.meta.env.MODE === 'development';
 
+// Default backend URL
+const DEFAULT_BACKEND_URL = 'http://localhost:5000';
+
 // API URL configuration
 const getApiBaseUrl = () => {
     // Check if we're in a browser environment
@@ -12,14 +15,23 @@ const getApiBaseUrl = () => {
         }
     }
     
-    // Default to localhost:5000 since that's where our backend is running
-    return 'http://localhost:5000/api';
+    // Default to localhost:5000
+    return `${DEFAULT_BACKEND_URL}/api`;
 };
 
-// Set default backend URL on load
+// Initialize backend URL in localStorage if not set
 if (typeof window !== 'undefined' && !localStorage.getItem('localBackendUrl')) {
-    localStorage.setItem('localBackendUrl', 'http://localhost:5000');
+    localStorage.setItem('localBackendUrl', DEFAULT_BACKEND_URL);
 }
+
+// Configure axios defaults
+import axios from 'axios';
+
+axios.defaults.baseURL = getApiBaseUrl();
+axios.defaults.withCredentials = true;
+axios.defaults.headers.common['Content-Type'] = 'application/json';
+axios.defaults.headers.common['Accept'] = 'application/json';
+axios.defaults.timeout = 10000; // 10 seconds timeout
 
 // Feature flags
 export const FEATURES = {
@@ -144,13 +156,6 @@ export const configuredFetch = (url, options = {}) => {
     };
     return fetch(url, finalOptions);
 };
-
-// Update axios default configuration
-import axios from 'axios';
-
-axios.defaults.withCredentials = true;
-axios.defaults.headers.common['Content-Type'] = 'application/json';
-axios.defaults.headers.common['Accept'] = 'application/json';
 
 export default {
     getApiUrl,
