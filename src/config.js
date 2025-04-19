@@ -12,9 +12,14 @@ const getApiBaseUrl = () => {
         }
     }
     
-    // Default to localhost
-    return 'http://localhost:8000/api';
+    // Default to localhost:5000 since that's where our backend is running
+    return 'http://localhost:5000/api';
 };
+
+// Set default backend URL on load
+if (typeof window !== 'undefined' && !localStorage.getItem('localBackendUrl')) {
+    localStorage.setItem('localBackendUrl', 'http://localhost:5000');
+}
 
 // Feature flags
 export const FEATURES = {
