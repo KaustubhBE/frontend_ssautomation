@@ -1,25 +1,34 @@
 // Environment variables
 const isDevelopment = import.meta.env.MODE === 'development';
-export const isProduction = import.meta.env.PROD;
 
 // API URL configuration
-const API_BASE_URL = isProduction 
-    ? 'http://148.66.155.33:8000/api'   // Updated
-    : 'http://localhost:8000/api';
+const getApiBaseUrl = () => {
+    // Check if we're in a browser environment
+    if (typeof window !== 'undefined') {
+        // Check if we have a stored local backend URL
+        const localBackendUrl = localStorage.getItem('localBackendUrl');
+        if (localBackendUrl) {
+            return `${localBackendUrl}/api`;
+        }
+    }
+    
+    // Default to localhost
+    return 'http://localhost:8000/api';
+};
 
 // Feature flags
 export const FEATURES = {
-  ENABLE_WHATSAPP: import.meta.env.VITE_ENABLE_WHATSAPP === 'true',
-  ENABLE_EMAIL: import.meta.env.VITE_ENABLE_EMAIL === 'true',
-  ENABLE_ERROR_REPORTING: import.meta.env.VITE_ENABLE_ERROR_REPORTING === 'true'
+    ENABLE_WHATSAPP: import.meta.env.VITE_ENABLE_WHATSAPP === 'true',
+    ENABLE_EMAIL: import.meta.env.VITE_ENABLE_EMAIL === 'true',
+    ENABLE_ERROR_REPORTING: import.meta.env.VITE_ENABLE_ERROR_REPORTING === 'true'
 };
 
 // Logging configuration
 export const LOG_CONFIG = {
-  LEVEL: import.meta.env.VITE_LOG_LEVEL || 'info'
+    LEVEL: import.meta.env.VITE_LOG_LEVEL || 'info'
 };
 
-// API request configuration with environment-specific settings
+// API request configuration
 export const API_CONFIG = {
     headers: {
         'Content-Type': 'application/json',
@@ -31,7 +40,19 @@ export const API_CONFIG = {
 
 // Function to get the full API URL for a specific endpoint
 export const getApiUrl = (endpoint) => {
-    return `${API_BASE_URL}/${endpoint}`;
+    return `${getApiBaseUrl()}/${endpoint}`;
+};
+
+// Function to set local backend URL
+export const setLocalBackendUrl = (url) => {
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('localBackendUrl', url);
+    }
+};
+
+// Function to get current backend URL
+export const getCurrentBackendUrl = () => {
+    return getApiBaseUrl();
 };
 
 // Common API endpoints
@@ -129,6 +150,5 @@ axios.defaults.headers.common['Accept'] = 'application/json';
 export default {
     getApiUrl,
     makeApiCall,
-    ENDPOINTS,
-    isProduction
+    ENDPOINTS
 };
