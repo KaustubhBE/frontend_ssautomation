@@ -235,7 +235,9 @@ function Processing({ mode = 'single' }) {
         full_year: monthsData[0].year,
         months_data: monthsData,
         whatsapp_message: whatsappMessage,
-        email_message: emailMessage
+        email_message: emailMessage,
+        send_whatsapp: sendWhatsApp,
+        send_email: sendEmail
       };
 
       const response = await axios.post(getApiUrl(endpoint), payload);
