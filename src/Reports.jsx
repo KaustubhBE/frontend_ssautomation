@@ -37,10 +37,14 @@ const Reports = () => {
       const fileType = file.type;
       const isValidType = 
         fileType === 'text/plain' || 
-        fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        fileType === 'image/png' ||
+        fileType === 'image/jpeg' ||
+        fileType === 'image/jpg' ||
+        fileType === 'application/pdf';
       
       if (!isValidType) {
-        alert(`File type not supported: ${file.name}. Please upload only .txt or .docx files.`);
+        alert(`File type not supported: ${file.name}. Please upload only .txt, .docx, .png, .jpg, .jpeg, or .pdf files.`);
       }
       return isValidType;
     });
@@ -54,10 +58,14 @@ const Reports = () => {
       const fileType = file.type;
       const isValidType = 
         fileType === 'text/plain' || 
-        fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        fileType === 'image/png' ||
+        fileType === 'image/jpeg' ||
+        fileType === 'image/jpg' ||
+        fileType === 'application/pdf';
       
       if (!isValidType) {
-        alert(`File type not supported: ${file.name}. Please upload only .txt or .docx files.`);
+        alert(`File type not supported: ${file.name}. Please upload only .txt, .docx, .png, .jpg, .jpeg, or .pdf files.`);
       }
       return isValidType;
     });
@@ -155,7 +163,7 @@ const Reports = () => {
       >
         <div className="drop-zone-content">
           <p>Drag and drop template files here</p>
-          <p className="file-types">Supported formats: .txt, .docx</p>
+          <p className="file-types">Supported formats: .txt, .docx, .png, .jpg, .jpeg, .pdf</p>
           <p className="template-info">
             Template files should contain placeholders that will be replaced with data from the Google Sheet.
             <br />
@@ -166,7 +174,7 @@ const Reports = () => {
             id="file-input"
             multiple
             onChange={handleFileInput}
-            accept=".txt,.docx"
+            accept=".txt,.docx,.png,.jpg,.jpeg,.pdf"
             style={{ display: 'none' }}
           />
           <button 

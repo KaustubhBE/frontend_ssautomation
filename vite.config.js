@@ -48,12 +48,12 @@ export default defineConfig(({ command, mode }) => {
     server: {
       port: 3000,
       strictPort: true,
-      host: true
+      host: 'localhost'
     },
     preview: {
       port: 3000,
       strictPort: true,
-      host: true
+      host: 'localhost'
     },
     esbuild: {
       loader: 'jsx',

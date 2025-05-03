@@ -3,7 +3,7 @@ import axios from 'axios';
 import './Dashboard.css'; // Import the CSS file
 
 // Base URL for API calls
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // Define available permissions for the two main activities
 const PERMISSIONS = {
