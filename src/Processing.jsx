@@ -9,7 +9,7 @@ import Settings from './Components/Settings';
 import { Route, Routes } from 'react-router-dom';
 import { getApiUrl, makeApiCall, ENDPOINTS } from './config.js';
 import axios from 'axios';
-import AttachmentSequence from './components/AttachmentSequence';
+import AttachmentSequence from './Components/AttachmentSequence';
 
 const plantData = [
   { 
