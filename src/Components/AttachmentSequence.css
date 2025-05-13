@@ -1,0 +1,98 @@
+.attachment-sequence {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.attachment-sequence h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 1.1em;
+}
+
+.help-text {
+  color: #666;
+  font-size: 0.9em;
+  margin-bottom: 15px;
+}
+
+.sequence-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sequence-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  margin: 5px 0;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: move;
+  transition: background-color 0.2s;
+}
+
+.sequence-item:hover {
+  background-color: #f0f0f0;
+}
+
+.sequence-number {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #007bff;
+  color: white;
+  border-radius: 50%;
+  margin-right: 10px;
+  font-weight: bold;
+}
+
+.sequence-month {
+  flex-grow: 1;
+  font-size: 1em;
+}
+
+.drag-handle {
+  color: #999;
+  font-size: 1.2em;
+  cursor: move;
+  padding: 0 10px;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .attachment-sequence {
+    background-color: #2d2d2d;
+  }
+
+  .attachment-sequence h3 {
+    color: #fff;
+  }
+
+  .help-text {
+    color: #aaa;
+  }
+
+  .sequence-item {
+    background-color: #3d3d3d;
+    border-color: #4d4d4d;
+  }
+
+  .sequence-item:hover {
+    background-color: #4d4d4d;
+  }
+
+  .sequence-month {
+    color: #fff;
+  }
+
+  .drag-handle {
+    color: #666;
+  }
+} 

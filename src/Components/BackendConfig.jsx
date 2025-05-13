@@ -54,7 +54,7 @@ const BackendConfig = () => {
                             id="localUrl"
                             value={localUrl}
                             onChange={(e) => setLocalUrl(e.target.value)}
-                            placeholder="http://localhost:8000"
+                            placeholder="http://localhost:5000"
                             required
                         />
                     </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import ToggleButton from './Components/Toggle-Button';
@@ -9,6 +9,7 @@ import Settings from './Components/Settings';
 import { Route, Routes } from 'react-router-dom';
 import { getApiUrl, makeApiCall, ENDPOINTS } from './config.js';
 import axios from 'axios';
+import AttachmentSequence from './components/AttachmentSequence';
 
 const plantData = [
   { 
@@ -159,6 +160,7 @@ function Processing({ mode = 'single' }) {
   const [emailMessage, setEmailMessage] = useState('');
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [attachmentSequence, setAttachmentSequence] = useState([]);
   
   const handleSelectChange = (event) => {
     const selectedPlantName = event.target.value;
@@ -205,6 +207,14 @@ function Processing({ mode = 'single' }) {
     setMonths(newMonths);
   };
 
+  // Update attachment sequence when months change
+  useEffect(() => {
+    setAttachmentSequence(months.map(monthData => ({
+      month: monthData.month,
+      year: monthData.financialYear.split('-')[0]
+    })));
+  }, [months]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -237,7 +247,8 @@ function Processing({ mode = 'single' }) {
         whatsapp_message: whatsappMessage,
         email_message: emailMessage,
         send_whatsapp: sendWhatsApp,
-        send_email: sendEmail
+        send_email: sendEmail,
+        attachment_sequence: attachmentSequence
       };
 
       const response = await axios.post(getApiUrl(endpoint), payload);
@@ -376,6 +387,14 @@ function Processing({ mode = 'single' }) {
                 </>
               )}
             </div>
+            
+            {months.length > 1 && (
+              <AttachmentSequence
+                months={months}
+                sequence={attachmentSequence}
+                onSequenceChange={setAttachmentSequence}
+              />
+            )}
             
             <div className="option-select">
               <div className='whatsappToggle' style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>

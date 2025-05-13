@@ -8,13 +8,15 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 // Define available permissions for the two main activities
 const PERMISSIONS = {
   SINGLE_PROCESSING: 'single_processing',
-  BATCH_PROCESSING: 'batch_processing'
+  BATCH_PROCESSING: 'batch_processing',
+  REPORT_ACCESS: 'report_access'
 };
 
 // Permission descriptions
 const PERMISSION_DESCRIPTIONS = {
   [PERMISSIONS.SINGLE_PROCESSING]: 'Process individual salary slips one at a time',
-  [PERMISSIONS.BATCH_PROCESSING]: 'Process multiple salary slips in batch'
+  [PERMISSIONS.BATCH_PROCESSING]: 'Process multiple salary slips in batch',
+  [PERMISSIONS.REPORT_ACCESS]: 'Access and generate reports'
 };
 
 function Dashboard() {
@@ -33,12 +35,19 @@ function Dashboard() {
 
   // Set default permissions when role changes
   useEffect(() => {
-    if (role === 'admin' || role === 'super-admin') {
+    if (role === 'super-admin') {
       setPermissions(Object.values(PERMISSIONS).reduce((acc, perm) => ({ ...acc, [perm]: true }), {}));
+    } else if (role === 'admin') {
+      setPermissions({
+        [PERMISSIONS.SINGLE_PROCESSING]: true,
+        [PERMISSIONS.BATCH_PROCESSING]: true,
+        [PERMISSIONS.REPORT_ACCESS]: false  // Admin needs explicit permission for reports
+      });
     } else {
       setPermissions({
         [PERMISSIONS.SINGLE_PROCESSING]: true,
-        [PERMISSIONS.BATCH_PROCESSING]: false
+        [PERMISSIONS.BATCH_PROCESSING]: false,
+        [PERMISSIONS.REPORT_ACCESS]: false
       });
     }
   }, [role]);
@@ -102,7 +111,8 @@ function Dashboard() {
         setRole('user');
         setPermissions({
           [PERMISSIONS.SINGLE_PROCESSING]: true,
-          [PERMISSIONS.BATCH_PROCESSING]: false
+          [PERMISSIONS.BATCH_PROCESSING]: false,
+          [PERMISSIONS.REPORT_ACCESS]: false
         });
       }
     } catch (err) {
@@ -206,6 +216,7 @@ function Dashboard() {
               <th>Email</th>
               <th>Role</th>
               <th>Processing Access</th>
+              <th>Report Access</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -230,25 +241,48 @@ function Dashboard() {
                 </td>
                 <td className="permissions-cell">
                   <div className="permissions-grid">
-                    {Object.entries(PERMISSIONS).map(([key, value]) => (
-                      <div key={`${user.id}-${value}`} className="permission-item">
-                        <label title={PERMISSION_DESCRIPTIONS[value]}>
-                          <input
-                            type="checkbox"
-                            checked={user.permissions?.[value] || false}
-                            onChange={() => {
-                              const updatedPermissions = {
-                                ...(user.permissions || {}),
-                                [value]: !(user.permissions?.[value] || false)
-                              };
-                              handleUpdatePermissions(user.id, updatedPermissions);
-                            }}
-                            disabled={user.role === 'admin' || user.role === 'super-admin'}
-                          />
-                          {key === 'SINGLE_PROCESSING' ? 'Single Processing' : 'Batch Processing'}
-                        </label>
-                      </div>
+                    {Object.entries(PERMISSIONS)
+                      .filter(([key]) => key !== 'REPORT_ACCESS')
+                      .map(([key, value]) => (
+                        <div key={`${user.id}-${value}`} className="permission-item">
+                          <label title={PERMISSION_DESCRIPTIONS[value]}>
+                            <input
+                              type="checkbox"
+                              checked={user.permissions?.[value] || false}
+                              onChange={() => {
+                                const updatedPermissions = {
+                                  ...(user.permissions || {}),
+                                  [value]: !(user.permissions?.[value] || false)
+                                };
+                                handleUpdatePermissions(user.id, updatedPermissions);
+                              }}
+                              disabled={user.role === 'super-admin' && user.id !== 'super-admin'}
+                            />
+                            {key === 'SINGLE_PROCESSING' ? 'Single Processing' : 'Batch Processing'}
+                          </label>
+                        </div>
                     ))}
+                  </div>
+                </td>
+                <td className="permissions-cell">
+                  <div className="permissions-grid">
+                    <div className="permission-item">
+                      <label title={PERMISSION_DESCRIPTIONS[PERMISSIONS.REPORT_ACCESS]}>
+                        <input
+                          type="checkbox"
+                          checked={user.permissions?.[PERMISSIONS.REPORT_ACCESS] || false}
+                          onChange={() => {
+                            const updatedPermissions = {
+                              ...(user.permissions || {}),
+                              [PERMISSIONS.REPORT_ACCESS]: !(user.permissions?.[PERMISSIONS.REPORT_ACCESS] || false)
+                            };
+                            handleUpdatePermissions(user.id, updatedPermissions);
+                          }}
+                          disabled={role === 'super-admin' && user.id !== 'super-admin'}
+                        />
+                        Report Access
+                      </label>
+                    </div>
                   </div>
                 </td>
                 <td>
@@ -318,19 +352,38 @@ function Dashboard() {
           <div className="form-group permissions-section">
             <label>Processing Access:</label>
             <div className="permissions-grid">
-              {Object.entries(PERMISSIONS).map(([key, value]) => (
-                <div key={value} className="permission-item">
-                  <label title={PERMISSION_DESCRIPTIONS[value]}>
-                    <input
-                      type="checkbox"
-                      checked={permissions[value]}
-                      onChange={() => handlePermissionChange(value)}
-                      disabled={role === 'admin' || role === 'super-admin'}
-                    />
-                    {key === 'SINGLE_PROCESSING' ? 'Single Processing' : 'Batch Processing'}
-                  </label>
-                </div>
+              {Object.entries(PERMISSIONS)
+                .filter(([key]) => key !== 'REPORT_ACCESS')
+                .map(([key, value]) => (
+                  <div key={value} className="permission-item">
+                    <label title={PERMISSION_DESCRIPTIONS[value]}>
+                      <input
+                        type="checkbox"
+                        checked={permissions[value]}
+                        onChange={() => handlePermissionChange(value)}
+                        disabled={role === 'super-admin' && user.id !== 'super-admin'}
+                      />
+                      {key === 'SINGLE_PROCESSING' ? 'Single Processing' : 'Batch Processing'}
+                    </label>
+                  </div>
               ))}
+            </div>
+          </div>
+
+          <div className="form-group permissions-section">
+            <label>Report Access:</label>
+            <div className="permissions-grid">
+              <div className="permission-item">
+                <label title={PERMISSION_DESCRIPTIONS[PERMISSIONS.REPORT_ACCESS]}>
+                  <input
+                    type="checkbox"
+                    checked={permissions[PERMISSIONS.REPORT_ACCESS]}
+                    onChange={() => handlePermissionChange(PERMISSIONS.REPORT_ACCESS)}
+                    disabled={role === 'super-admin' && user.id !== 'super-admin'}
+                  />
+                  Report Access
+                </label>
+              </div>
             </div>
           </div>
           
