@@ -10,7 +10,7 @@ const getApiBaseUrl = () => {
     if (typeof window !== 'undefined') {
         // Check if we have a stored local backend URL
         const localBackendUrl = localStorage.getItem('localBackendUrl');
-        if (localBackendUrl) {
+        if (localBackendUrl && isDevelopment) {
             return `${localBackendUrl}/api`;
         }
     }
