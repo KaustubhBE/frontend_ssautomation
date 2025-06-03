@@ -122,16 +122,40 @@ const Reports = () => {
   };
 
   const validateSheetId = (id) => {
-    // Google Sheet ID is typically 44 characters long
+    // Google Sheet ID is typically 20-100 characters long
     const sheetIdRegex = /^[a-zA-Z0-9-_]{44}$/;
     return sheetIdRegex.test(id);
   };
 
+  const extractSheetId = (url) => {
+    try {
+      // Handle different Google20,100heets URL formats
+      let sheetId = url;
+      
+      // If it's a complete URL
+      if (url.includes('docs.google.com')) {
+        // Extract ID from URL patterns like:
+        // https://docs.google.com/spreadsheets/d/1AbCdEfGhIjKlMnOpQrStUvWxYz/edit
+        // https://docs.google.com/spreadsheets/d/1AbCdEfGhIjKlMnOpQrStUvWxYz/edit#gid=0
+        const match = url.match(/\/d\/([a-zA-Z0-9-_]{44})/);
+        if (match && match[1]) {
+          sheetId = match[1];
+        }
+      }
+      
+      return sheetId;
+    } catch (error) {
+      console.error('Error extracting sheet ID:', error);
+      return url; // Return original input if extraction fails
+    }
+  };
+
   const handleSheetIdChange = (e) => {
     const value = e.target.value.trim();
-    setSheetId(value);
+    const extractedId = extractSheetId(value);
+    setSheetId(extractedId);
     
-    if (value && !validateSheetId(value)) {
+    if (extractedId && !validateSheetId(extractedId)) {
       setSheetError('Invalid Google Sheet ID format');
     } else {
       setSheetError('');
@@ -200,6 +224,9 @@ const Reports = () => {
       formData.append('send_whatsapp', sendWhatsapp);
       formData.append('send_email', sendEmail);
 
+      // Add file sequencing information as a JSON string
+      formData.append('file_sequence', JSON.stringify(previewItems));
+
       // Send request to backend
       const response = await fetch(getApiUrl('send-reports'), {
         method: 'POST',
@@ -227,6 +254,9 @@ const Reports = () => {
       setSheetName('');
       setSendWhatsapp(false);
       setSendEmail(false);
+      
+      // Refresh the page after successful submission
+      window.location.reload();
       
     } catch (error) {
       console.error('Error generating reports:', error);
@@ -570,43 +600,6 @@ const Reports = () => {
         </div>
       </div>
 
-      {/* Add CSS for the new layout */}
-      <style>
-        {`
-          .preview-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-top: 20px;
-          }
-
-          .preview-content-section,
-          .sequencing-section {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          }
-
-          .preview-content-section h3,
-          .sequencing-section h3 {
-            padding: 15px 20px;
-            margin: 0;
-            border-bottom: 1px solid #dee2e6;
-            background: #f8f9fa;
-            border-radius: 8px 8px 0 0;
-          }
-
-          .sequencing-placeholder {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            color: #6c757d;
-            font-style: italic;
-          }
-        `}
-      </style>
-
       <div className="sheet-id-section">
         <div className="sheet-inputs">
           <div className="sheet-input-group">
@@ -659,7 +652,10 @@ const Reports = () => {
                   <span className="header-label">Name</span>
                 </div>
                 <div className="header-item">
-                  <span className="header-label">Phone No</span>
+                  <span className="header-label">Country Code</span>
+                </div>
+                <div className="header-item">
+                  <span className="header-label">Contact No.</span>
                 </div>
                 <div className="header-item">
                   <span className="header-label">Email ID</span>
@@ -667,7 +663,7 @@ const Reports = () => {
                 <button 
                   className="copy-all-headers-button"
                   onClick={() => {
-                    const headers = ['Name', 'Phone No', 'Email ID'];
+                    const headers = ['Name', 'Country Code', 'Contact No.', 'Email ID'];
                     navigator.clipboard.writeText(headers.join('\t'));
                     alert('Headers copied to clipboard! Paste them in the first row of your Google Sheet');
                   }}
