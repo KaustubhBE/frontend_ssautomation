@@ -2,7 +2,7 @@
 const isDevelopment = import.meta.env.MODE === 'development';
 
 // Default backend URL
-const DEFAULT_BACKEND_URL = 'http://localhost:5000';
+const DEFAULT_BACKEND_URL = isDevelopment ? 'http://localhost:5000' : 'https://be-ss-automation.onrender.com';
 
 // API URL configuration
 const getApiBaseUrl = () => {
@@ -15,7 +15,7 @@ const getApiBaseUrl = () => {
         }
     }
     
-    // Default to localhost:5000
+    // Use the appropriate backend URL based on environment
     return `${DEFAULT_BACKEND_URL}/api`;
 };
 

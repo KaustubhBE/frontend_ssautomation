@@ -285,7 +285,11 @@ const Reports = () => {
       const response = await fetch(apiUrl, {
         method: 'POST',
         body: formData,
-        credentials: 'include'
+        credentials: 'include',
+        mode: 'cors',
+        headers: {
+          'Accept': 'application/json'
+        }
       });
 
       if (!response.ok) {
