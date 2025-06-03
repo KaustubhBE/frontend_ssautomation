@@ -1,5 +1,5 @@
 // Environment variables
-const isDevelopment = import.meta.env.MODE === 'development';
+const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
 // Default backend URL
 const DEFAULT_BACKEND_URL = isDevelopment ? 'http://localhost:5000' : 'https://be-ss-automation.onrender.com';
