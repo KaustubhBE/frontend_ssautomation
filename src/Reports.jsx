@@ -255,9 +255,6 @@ const Reports = () => {
       setSendWhatsapp(false);
       setSendEmail(false);
       
-      // Refresh the page after successful submission
-      window.location.reload();
-      
     } catch (error) {
       console.error('Error generating reports:', error);
       alert(error.message || 'Failed to generate reports. Please try again.');
