@@ -4,7 +4,7 @@ import { getApiUrl } from './config';
 
 const Reports = () => {
   const [templateFiles, setTemplateFiles] = useState([]);
-  const [attachmentFiles, setAttachmentFiles] = useState([]);
+  const [attachmentFiles, setAttachmentFiles] = useState({});
   const [isDraggingTemplate, setIsDraggingTemplate] = useState(false);
   const [isDraggingAttachment, setIsDraggingAttachment] = useState(false);
   const [sheetId, setSheetId] = useState('');
@@ -19,6 +19,7 @@ const Reports = () => {
   const [previewItems, setPreviewItems] = useState([]);
   const [draggedItem, setDraggedItem] = useState(null);
   const [previewTitle, setPreviewTitle] = useState('');
+  const [mailSubject, setMailSubject] = useState('');
 
   const handleDragEnter = useCallback((e, type) => {
     e.preventDefault();
@@ -74,7 +75,15 @@ const Reports = () => {
       }
       setTemplateFiles(validFiles);
     } else {
-      setAttachmentFiles(prevFiles => [...prevFiles, ...validFiles]);
+      setAttachmentFiles(prevFiles => {
+        const newFiles = { ...prevFiles };
+        let maxKey = Object.keys(newFiles).length > 0 ? Math.max(...Object.keys(newFiles).map(Number)) : 0;
+        validFiles.forEach(file => {
+          maxKey += 1;
+          newFiles[maxKey] = file;
+        });
+        return newFiles;
+      });
     }
   }, []);
 
@@ -106,7 +115,15 @@ const Reports = () => {
         handleFilePreview(validFiles[0], 'template');
       }
     } else {
-      setAttachmentFiles(prevFiles => [...prevFiles, ...validFiles]);
+      setAttachmentFiles(prevFiles => {
+        const newFiles = { ...prevFiles };
+        let maxKey = Object.keys(newFiles).length > 0 ? Math.max(...Object.keys(newFiles).map(Number)) : 0;
+        validFiles.forEach(file => {
+          maxKey += 1;
+          newFiles[maxKey] = file;
+        });
+        return newFiles;
+      });
       if (validFiles.length > 0) {
         handleFilePreview(validFiles[0], 'attachment');
       }
@@ -117,7 +134,17 @@ const Reports = () => {
     if (type === 'template') {
       setTemplateFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
     } else {
-      setAttachmentFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
+      setAttachmentFiles(prevFiles => {
+        const newFiles = { ...prevFiles };
+        delete newFiles[index + 1]; // index+1 because keys are 1-based
+        // Re-sequence keys
+        const filesArr = Object.values(newFiles);
+        const resequenced = {};
+        filesArr.forEach((file, i) => {
+          resequenced[i + 1] = file;
+        });
+        return resequenced;
+      });
     }
   };
 
@@ -213,8 +240,13 @@ const Reports = () => {
         formData.append('template_files', file);
       });
 
-      // Add attachment files
-      attachmentFiles.forEach(file => {
+      // Sort attachment files by their sequence number and add them in order
+      const sortedAttachmentFiles = Object.entries(attachmentFiles)
+        .sort(([keyA], [keyB]) => Number(keyA) - Number(keyB))
+        .map(([_, file]) => file);
+
+      // Add attachment files in sorted order
+      sortedAttachmentFiles.forEach(file => {
         formData.append('attachment_files', file);
       });
 
@@ -223,6 +255,7 @@ const Reports = () => {
       formData.append('sheet_name', sheetName);
       formData.append('send_whatsapp', sendWhatsapp);
       formData.append('send_email', sendEmail);
+      formData.append('mail_subject', mailSubject);
 
       // Add file sequencing information as a JSON string
       formData.append('file_sequence', JSON.stringify(previewItems));
@@ -249,11 +282,12 @@ const Reports = () => {
       
       // Reset form
       setTemplateFiles([]);
-      setAttachmentFiles([]);
+      setAttachmentFiles({});
       setSheetId('');
       setSheetName('');
       setSendWhatsapp(false);
       setSendEmail(false);
+      setMailSubject('');
       
       // Refresh the page after successful submission
       window.location.reload();
@@ -269,8 +303,13 @@ const Reports = () => {
   const handleFilePreview = async (file, type) => {
     try {
       if (type === 'attachment') {
-        // For attachments, just show the filename in square brackets
-        setPreviewItems([{ id: Date.now(), content: `[${file.name}]`, type: 'attachment' }]);
+        // For attachments, show all filenames in order
+        const items = Object.entries(attachmentFiles).map(([key, file]) => ({
+          id: Number(key),
+          content: `[${file.name}]`,
+          type: 'attachment'
+        }));
+        setPreviewItems(items);
         setPreviewTitle('Attachment Preview');
         return;
       }
@@ -311,10 +350,10 @@ const Reports = () => {
       ];
 
       // Add attachment items
-      if (attachmentFiles.length > 0) {
-        attachmentFiles.forEach(file => {
+      if (Object.keys(attachmentFiles).length > 0) {
+        Object.entries(attachmentFiles).forEach(([key, file]) => {
           items.push({
-            id: Date.now() + Math.random(),
+            id: Number(key),
             content: `[${file.name}]`,
             type: 'attachment'
           });
@@ -351,14 +390,28 @@ const Reports = () => {
     
     setPreviewItems(newItems);
     setDraggedItem(null);
+
+    // If attachments are being reordered, update attachmentFiles object
+    const attachmentItems = newItems.filter(item => item.type === 'attachment');
+    if (attachmentItems.length > 0) {
+      const resequenced = {};
+      attachmentItems.forEach((item, i) => {
+        // Find the file by name in the old attachmentFiles
+        const file = Object.values(attachmentFiles).find(f => `[${f.name}]` === item.content);
+        if (file) {
+          resequenced[i + 1] = file;
+        }
+      });
+      setAttachmentFiles(resequenced);
+    }
   };
 
   // Add a new function to update preview when files change
   const updatePreview = useCallback(() => {
     if (templateFiles.length > 0) {
       handleFilePreview(templateFiles[0], 'template');
-    } else if (attachmentFiles.length > 0) {
-      handleFilePreview(attachmentFiles[0], 'attachment');
+    } else if (Object.keys(attachmentFiles).length > 0) {
+      handleFilePreview(Object.values(attachmentFiles)[0], 'attachment');
     } else {
       setPreviewItems([]);
       setPreviewTitle('Preview');
@@ -374,6 +427,19 @@ const Reports = () => {
     <div className="reports-container">
       <h1>Generate Reports</h1>
       
+      {/* Email Subject at the top, full width */}
+      <div className="full-width-input-group">
+        <label htmlFor="mail-subject">Email Subject</label>
+        <input
+          type="text"
+          id="mail-subject"
+          value={mailSubject}
+          onChange={e => setMailSubject(e.target.value)}
+          placeholder="Enter Email Subject"
+          className="full-width-input"
+        />
+      </div>
+
       <div className="drop-zones-container">
         <div 
           className={`drop-zone ${isDraggingTemplate ? 'dragging' : ''}`}
@@ -459,9 +525,9 @@ const Reports = () => {
               </button>
               {showAttachmentDropdown && (
                 <div className="files-dropdown">
-                  {attachmentFiles.length > 0 ? (
-                    attachmentFiles.map((file, index) => (
-                      <div key={`attachment-${index}`} className="file-item">
+                  {Object.entries(attachmentFiles).length > 0 ? (
+                    Object.entries(attachmentFiles).map(([key, file], index) => (
+                      <div key={`attachment-${key}`} className="file-item">
                         <span className="file-name" title={file.name}>
                           {file.name}
                         </span>
