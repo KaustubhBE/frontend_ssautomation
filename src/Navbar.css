@@ -59,5 +59,11 @@
 }
 
 .menu span:hover {
-  background-color: #555;
+  background-color: #f0f0f0;
+}
+
+.menu-divider {
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 8px 0;
 }

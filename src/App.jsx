@@ -7,6 +7,8 @@ import Login from './Login';
 import Navbar from './Navbar';
 import Dashboard from './Dashboard';
 import Reports from './Reports'
+import PrivacyPolicy from './Components/PrivacyPolicy';
+import TermsAndConditions from './Components/TermsAndConditions';
 import { useAuth } from './Components/AuthContext';
 
 function App() {
@@ -131,6 +133,9 @@ function App() {
         <Route path="/reports" element={
           isAuthenticated ? <Reports /> : <Navigate to="/login" replace />
         } />
+
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
 
         <Route path="*" element={<Navigate to="/app" replace />} />
       </Routes>

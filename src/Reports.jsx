@@ -201,105 +201,6 @@ const Reports = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (templateFiles.length === 0) {
-      alert('Please add at least one template file');
-      return;
-    }
-
-    if (!sheetId) {
-      setSheetError('Google Sheet ID is required');
-      return;
-    }
-
-    if (!validateSheetId(sheetId)) {
-      setSheetError('Invalid Google Sheet ID format');
-      return;
-    }
-
-    if (!sheetName) {
-      alert('Please enter the sheet name');
-      return;
-    }
-
-    if (!sendWhatsapp && !sendEmail) {
-      alert('Please select at least one notification method (WhatsApp or Email)');
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // Create FormData object
-      const formData = new FormData();
-      
-      // Add template files
-      templateFiles.forEach(file => {
-        formData.append('template_files', file);
-      });
-
-      // Sort attachment files by their sequence number and add them in order
-      const sortedAttachmentFiles = Object.entries(attachmentFiles)
-        .sort(([keyA], [keyB]) => Number(keyA) - Number(keyB))
-        .map(([_, file]) => file);
-
-      // Add attachment files in sorted order
-      sortedAttachmentFiles.forEach(file => {
-        formData.append('attachment_files', file);
-      });
-
-      // Add other required data
-      formData.append('sheet_id', sheetId);
-      formData.append('sheet_name', sheetName);
-      formData.append('send_whatsapp', sendWhatsapp);
-      formData.append('send_email', sendEmail);
-      formData.append('mail_subject', mailSubject);
-
-      // Add file sequencing information as a JSON string
-      formData.append('file_sequence', JSON.stringify(previewItems));
-
-      // Send request to backend
-      const response = await fetch(getApiUrl('send-reports'), {
-        method: 'POST',
-        body: formData,
-        headers: {
-          // Don't set Content-Type header when sending FormData
-          // The browser will automatically set it with the correct boundary
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate reports');
-      }
-
-      const result = await response.json();
-      
-      // Show success message
-      alert(result.message || 'Reports generated and sent successfully!');
-      
-      // Reset form
-      setTemplateFiles([]);
-      setAttachmentFiles({});
-      setSheetId('');
-      setSheetName('');
-      setSendWhatsapp(false);
-      setSendEmail(false);
-      setMailSubject('');
-      
-      // Refresh the page after successful submission
-      window.location.reload();
-      
-    } catch (error) {
-      console.error('Error generating reports:', error);
-      alert(error.message || 'Failed to generate reports. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleFilePreview = async (file, type) => {
     try {
       if (type === 'attachment') {
@@ -344,24 +245,25 @@ const Reports = () => {
       // Format the template content with proper line breaks
       let templateContent = data.content.split('\n').map(line => line.trim()).join('\n');
       
-      // Create items array with template content and attachments
+      // Create items array with template content
       const items = [
-        { id: Date.now(), content: templateContent, type: 'template' }
+        { id: 1, content: templateContent, type: 'template', file: file }
       ];
 
       // Add attachment items
       if (Object.keys(attachmentFiles).length > 0) {
         Object.entries(attachmentFiles).forEach(([key, file]) => {
           items.push({
-            id: Number(key),
+            id: Number(key) + 1, // Start from 2 since template is 1
             content: `[${file.name}]`,
-            type: 'attachment'
+            type: 'attachment',
+            file: file
           });
         });
       }
 
       setPreviewItems(items);
-      setPreviewTitle('Template Preview');
+      setPreviewTitle('Content Preview');
     } catch (error) {
       console.error('Error previewing file:', error);
       setPreviewItems([{ id: Date.now(), content: `Error previewing file: ${error.message}`, type: 'error' }]);
@@ -388,19 +290,21 @@ const Reports = () => {
     newItems.splice(draggedItem, 1);
     newItems.splice(index, 0, draggedContent);
     
-    setPreviewItems(newItems);
+    // Update IDs to maintain sequence
+    const updatedItems = newItems.map((item, idx) => ({
+      ...item,
+      id: idx + 1
+    }));
+    
+    setPreviewItems(updatedItems);
     setDraggedItem(null);
 
     // If attachments are being reordered, update attachmentFiles object
-    const attachmentItems = newItems.filter(item => item.type === 'attachment');
+    const attachmentItems = updatedItems.filter(item => item.type === 'attachment');
     if (attachmentItems.length > 0) {
       const resequenced = {};
       attachmentItems.forEach((item, i) => {
-        // Find the file by name in the old attachmentFiles
-        const file = Object.values(attachmentFiles).find(f => `[${f.name}]` === item.content);
-        if (file) {
-          resequenced[i + 1] = file;
-        }
+        resequenced[i + 1] = item.file;
       });
       setAttachmentFiles(resequenced);
     }
@@ -422,6 +326,103 @@ const Reports = () => {
   useEffect(() => {
     updatePreview();
   }, [templateFiles, attachmentFiles, updatePreview]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (templateFiles.length === 0) {
+      alert('Please add at least one template file');
+      return;
+    }
+
+    if (!sheetId) {
+      setSheetError('Google Sheet ID is required');
+      return;
+    }
+
+    if (!validateSheetId(sheetId)) {
+      setSheetError('Invalid Google Sheet ID format');
+      return;
+    }
+
+    if (!sheetName) {
+      alert('Please enter the sheet name');
+      return;
+    }
+
+    if (!sendWhatsapp && !sendEmail) {
+      alert('Please select at least one notification method (WhatsApp or Email)');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Create FormData object
+      const formData = new FormData();
+      
+      // Sort all items by their sequence number
+      const sortedItems = [...previewItems].sort((a, b) => a.id - b.id);
+      
+      // Add files in sequence order
+      sortedItems.forEach(item => {
+        if (item.type === 'template') {
+          formData.append('template_files', item.file);
+        } else if (item.type === 'attachment') {
+          formData.append('attachment_files', item.file);
+        }
+      });
+
+      // Add other required data
+      formData.append('sheet_id', sheetId);
+      formData.append('sheet_name', sheetName);
+      formData.append('send_whatsapp', sendWhatsapp);
+      formData.append('send_email', sendEmail);
+      formData.append('mail_subject', mailSubject);
+
+      // Add file sequencing information as a JSON string
+      formData.append('file_sequence', JSON.stringify(sortedItems));
+
+      // Send request to backend
+      const response = await fetch(getApiUrl('send-reports'), {
+        method: 'POST',
+        body: formData,
+        headers: {
+          // Don't set Content-Type header when sending FormData
+          // The browser will automatically set it with the correct boundary
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate reports');
+      }
+
+      const result = await response.json();
+      
+      // Show success message
+      alert(result.message || 'Reports generated and sent successfully!');
+      
+      // Reset form
+      setTemplateFiles([]);
+      setAttachmentFiles({});
+      setSheetId('');
+      setSheetName('');
+      setSendWhatsapp(false);
+      setSendEmail(false);
+      setMailSubject('');
+      setPreviewItems([]);
+      
+      // Refresh the page after successful submission
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('Error generating reports:', error);
+      alert(error.message || 'Failed to generate reports. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="reports-container">
@@ -552,11 +553,11 @@ const Reports = () => {
       {/* Split Preview Section */}
       <div className="preview-section">
         <div className="preview-container">
-          {/* Content Preview */}
+          {/* Template Preview */}
           <div className="preview-content-section">
-            <h3>Content Preview</h3>
+            <h3>Template Preview</h3>
             <div className="preview-content">
-              {previewItems.length > 0 ? (
+              {templateFiles.length > 0 && previewItems.length > 0 ? (
                 <div 
                   style={{ 
                     backgroundColor: '#f8f9fa',
@@ -569,7 +570,7 @@ const Reports = () => {
                 >
                   {previewItems
                     .filter(item => item.type === 'template')
-                    .map((item, index) => (
+                    .map((item) => (
                       <div
                         key={item.id}
                         style={{
@@ -608,7 +609,7 @@ const Reports = () => {
             </div>
           </div>
 
-          {/* Sequencing Section */}
+          {/* Content Sequencing */}
           <div className="sequencing-section">
             <h3>Content Sequencing</h3>
             <div className="sequencing-content">
@@ -645,9 +646,10 @@ const Reports = () => {
                       <div style={{ 
                         marginRight: '10px',
                         color: '#6c757d',
-                        fontSize: '14px'
+                        fontSize: '14px',
+                        fontWeight: 'bold'
                       }}>
-                        {index + 1}.
+                        {item.id}.
                       </div>
                       <div style={{
                         flex: 1,
@@ -728,7 +730,7 @@ const Reports = () => {
                   <span className="header-label">Contact No.</span>
                 </div>
                 <div className="header-item">
-                  <span className="header-label">Email ID</span>
+                  <span className="header-label">Email ID - To</span>
                 </div>
                 <button 
                   className="copy-all-headers-button"
