@@ -21,6 +21,81 @@ const Reports = () => {
   const [previewTitle, setPreviewTitle] = useState('');
   const [mailSubject, setMailSubject] = useState('');
 
+  // Helper to get file type as a string
+  const getFileType = (file) => {
+    if (file.type === 'text/plain') return 'text';
+    return 'file';
+  };
+
+  // Function to get template file content
+  const getTemplateFileContent = useCallback(async (templateFile) => {
+    if (!templateFile) return null;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', templateFile);
+
+      const apiUrl = getApiUrl('preview-file');
+      console.log('Sending preview request to:', apiUrl);
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+        mode: 'cors',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to preview file' }));
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (!data.content) {
+        throw new Error('No content received from server');
+      }
+      return data.content.split('\n').map(line => line.trim()).join('\n');
+    } catch (error) {
+      console.error('Error getting template content:', error);
+      return `Error loading template: ${error.message}`;
+    }
+  }, []);
+
+  // Function to build and set previewItems based on current templateFiles and attachmentFiles
+  const buildAndSetPreviewItems = useCallback(async (currentTemplateFiles, currentAttachmentFiles) => {
+    let items = [];
+
+    if (currentTemplateFiles.length > 0) {
+      const content = await getTemplateFileContent(currentTemplateFiles[0]);
+      if (content) {
+        items.push({ id: 1, content: content, type: 'template', file: currentTemplateFiles[0] });
+      }
+    }
+
+    let attachmentIndex = items.length > 0 ? items.length + 1 : 1;
+    Object.values(currentAttachmentFiles).forEach(obj => {
+      items.push({
+        id: attachmentIndex,
+        content: `[${obj.file.name}] (${obj.type})`,
+        type: 'attachment',
+        file: obj.file,
+        fileType: obj.type
+      });
+      attachmentIndex++;
+    });
+
+    setPreviewItems(items);
+    setPreviewTitle(items.length > 0 ? 'Content Preview' : 'Preview');
+  }, [getTemplateFileContent]);
+
+  // Initial build of preview items when component mounts or files change
+  useEffect(() => {
+    buildAndSetPreviewItems(templateFiles, attachmentFiles);
+  }, [templateFiles, attachmentFiles, buildAndSetPreviewItems]);
+
   const handleDragEnter = useCallback((e, type) => {
     e.preventDefault();
     e.stopPropagation();
@@ -46,7 +121,7 @@ const Reports = () => {
     e.stopPropagation();
   }, []);
 
-  const handleDrop = useCallback((e, type) => {
+  const handleDrop = useCallback(async (e, type) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -74,18 +149,20 @@ const Reports = () => {
         return;
       }
       setTemplateFiles(validFiles);
+      await buildAndSetPreviewItems(validFiles, attachmentFiles); // Update preview immediately
     } else {
       setAttachmentFiles(prevFiles => {
         const newFiles = { ...prevFiles };
         let maxKey = Object.keys(newFiles).length > 0 ? Math.max(...Object.keys(newFiles).map(Number)) : 0;
         validFiles.forEach(file => {
           maxKey += 1;
-          newFiles[maxKey] = file;
+          newFiles[maxKey] = { file, type: getFileType(file) };
         });
+        buildAndSetPreviewItems(templateFiles, newFiles); // Update preview immediately
         return newFiles;
       });
     }
-  }, []);
+  }, [templateFiles, attachmentFiles, buildAndSetPreviewItems, getFileType]); // Add dependencies for handleFilePreview, templateFiles and attachmentFiles
 
   const handleFileInput = (e, type) => {
     const selectedFiles = Array.from(e.target.files);
@@ -111,38 +188,35 @@ const Reports = () => {
         return;
       }
       setTemplateFiles(validFiles);
-      if (validFiles.length > 0) {
-        handleFilePreview(validFiles[0], 'template');
-      }
+      buildAndSetPreviewItems(validFiles, attachmentFiles); // Update preview immediately
     } else {
       setAttachmentFiles(prevFiles => {
         const newFiles = { ...prevFiles };
         let maxKey = Object.keys(newFiles).length > 0 ? Math.max(...Object.keys(newFiles).map(Number)) : 0;
         validFiles.forEach(file => {
           maxKey += 1;
-          newFiles[maxKey] = file;
+          newFiles[maxKey] = { file, type: getFileType(file) };
         });
+        buildAndSetPreviewItems(templateFiles, newFiles); // Update preview immediately
         return newFiles;
       });
-      if (validFiles.length > 0) {
-        handleFilePreview(validFiles[0], 'attachment');
-      }
     }
   };
 
   const handleRemoveFile = (index, type) => {
     if (type === 'template') {
-      setTemplateFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
-    } else {
+      setTemplateFiles([]); // Template is removed
+      buildAndSetPreviewItems([], attachmentFiles); // Update preview immediately
+    } else { // type === 'attachment'
       setAttachmentFiles(prevFiles => {
         const newFiles = { ...prevFiles };
         delete newFiles[index + 1]; // index+1 because keys are 1-based
-        // Re-sequence keys
         const filesArr = Object.values(newFiles);
         const resequenced = {};
-        filesArr.forEach((file, i) => {
-          resequenced[i + 1] = file;
+        filesArr.forEach((obj, i) => {
+          resequenced[i + 1] = obj;
         });
+        buildAndSetPreviewItems(templateFiles, resequenced); // Update preview immediately
         return resequenced;
       });
     }
@@ -190,147 +264,46 @@ const Reports = () => {
   };
 
   const handleSheetNameChange = (e) => {
-    setSheetName(e.target.value.trim());
+    setSheetName(e.target.value);
   };
 
   const handleCopyServiceAccount = () => {
-    const serviceAccountId = "ems-974@be-ss-automation-445106.iam.gserviceaccount.com";
-    navigator.clipboard.writeText(serviceAccountId).then(() => {
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
-    });
-  };
-
-  const handleFilePreview = async (file, type) => {
-    try {
-      if (type === 'attachment') {
-        // For attachments, show all filenames in order
-        const items = Object.entries(attachmentFiles).map(([key, file]) => ({
-          id: Number(key),
-          content: `[${file.name}]`,
-          type: 'attachment'
-        }));
-        setPreviewItems(items);
-        setPreviewTitle('Attachment Preview');
-        return;
-      }
-
-      // For template files, get the content
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const apiUrl = getApiUrl('preview-file');
-      console.log('Sending preview request to:', apiUrl);
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-        mode: 'cors',
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Failed to preview file' }));
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      if (!data.content) {
-        throw new Error('No content received from server');
-      }
-
-      // Format the template content with proper line breaks
-      let templateContent = data.content.split('\n').map(line => line.trim()).join('\n');
-      
-      // Create items array with template content
-      const items = [
-        { id: 1, content: templateContent, type: 'template', file: file }
-      ];
-
-      // Add attachment items
-      if (Object.keys(attachmentFiles).length > 0) {
-        Object.entries(attachmentFiles).forEach(([key, file]) => {
-          items.push({
-            id: Number(key) + 1, // Start from 2 since template is 1
-            content: `[${file.name}]`,
-            type: 'attachment',
-            file: file
-          });
-        });
-      }
-
-      setPreviewItems(items);
-      setPreviewTitle('Content Preview');
-    } catch (error) {
-      console.error('Error previewing file:', error);
-      setPreviewItems([{ id: Date.now(), content: `Error previewing file: ${error.message}`, type: 'error' }]);
-      setPreviewTitle('Preview Error');
-    }
+    navigator.clipboard.writeText('automation@be-ss-automation.iam.gserviceaccount.com');
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 2000); // Reset success message after 2 seconds
   };
 
   const handlePreviewDragStart = (e, index) => {
-    setDraggedItem(index);
-    e.dataTransfer.effectAllowed = 'move';
+    setDraggedItem(previewItems[index]);
   };
 
   const handlePreviewDragOver = (e, index) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
   };
 
-  const handlePreviewDrop = (e, index) => {
+  const handlePreviewDrop = (e, targetIndex) => {
     e.preventDefault();
-    if (draggedItem === null) return;
+    if (!draggedItem) return;
 
-    const newItems = [...previewItems];
-    const draggedContent = newItems[draggedItem];
-    newItems.splice(draggedItem, 1);
-    newItems.splice(index, 0, draggedContent);
-    
-    // Update IDs to maintain sequence
-    const updatedItems = newItems.map((item, idx) => ({
+    const updatedItems = Array.from(previewItems);
+    const draggedIndex = updatedItems.findIndex(item => item.id === draggedItem.id);
+    const [reorderedItem] = updatedItems.splice(draggedIndex, 1);
+    updatedItems.splice(targetIndex, 0, reorderedItem);
+
+    // Re-sequence IDs after reordering
+    const resequencedItems = updatedItems.map((item, index) => ({
       ...item,
-      id: idx + 1
+      id: index + 1
     }));
-    
-    setPreviewItems(updatedItems);
-    setDraggedItem(null);
 
-    // If attachments are being reordered, update attachmentFiles object
-    const attachmentItems = updatedItems.filter(item => item.type === 'attachment');
-    if (attachmentItems.length > 0) {
-      const resequenced = {};
-      attachmentItems.forEach((item, i) => {
-        resequenced[i + 1] = item.file;
-      });
-      setAttachmentFiles(resequenced);
-    }
+    setPreviewItems(resequencedItems);
+    setDraggedItem(null); // Reset dragged item after drop
   };
-
-  // Add a new function to update preview when files change
-  const updatePreview = useCallback(() => {
-    if (templateFiles.length > 0) {
-      handleFilePreview(templateFiles[0], 'template');
-    } else if (Object.keys(attachmentFiles).length > 0) {
-      handleFilePreview(Object.values(attachmentFiles)[0], 'attachment');
-    } else {
-      setPreviewItems([]);
-      setPreviewTitle('Preview');
-    }
-  }, [templateFiles, attachmentFiles]);
-
-  // Update preview whenever files change
-  useEffect(() => {
-    updatePreview();
-  }, [templateFiles, attachmentFiles, updatePreview]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (templateFiles.length === 0) {
+    if (previewItems.filter(item => item.type === 'template').length === 0) {
       alert('Please add at least one template file');
       return;
     }
@@ -361,7 +334,7 @@ const Reports = () => {
       // Create FormData object
       const formData = new FormData();
       
-      // Sort all items by their sequence number
+      // Use the order from previewItems
       const sortedItems = [...previewItems].sort((a, b) => a.id - b.id);
       
       // Add files in sequence order
@@ -527,10 +500,10 @@ const Reports = () => {
               {showAttachmentDropdown && (
                 <div className="files-dropdown">
                   {Object.entries(attachmentFiles).length > 0 ? (
-                    Object.entries(attachmentFiles).map(([key, file], index) => (
+                    Object.entries(attachmentFiles).map(([key, obj], index) => (
                       <div key={`attachment-${key}`} className="file-item">
-                        <span className="file-name" title={file.name}>
-                          {file.name}
+                        <span className="file-name" title={obj.file.name}>
+                          {obj.file.name} ({obj.type})
                         </span>
                         <button 
                           className="remove-button"
@@ -556,44 +529,20 @@ const Reports = () => {
           {/* Template Preview */}
           <div className="preview-content-section">
             <h3>Template Preview</h3>
-            <div className="preview-content">
-              {templateFiles.length > 0 && previewItems.length > 0 ? (
-                <div 
-                  style={{ 
-                    backgroundColor: '#f8f9fa',
-                    border: '1px solid #dee2e6',
-                    borderRadius: '4px',
-                    padding: '20px',
-                    height: '300px',
-                    overflowY: 'auto'
-                  }}
-                >
-                  {previewItems
-                    .filter(item => item.type === 'template')
-                    .map((item) => (
-                      <div
-                        key={item.id}
-                        style={{
-                          padding: '10px',
-                          margin: '5px 0',
-                          backgroundColor: 'white',
-                          border: '1px solid #dee2e6',
-                          borderRadius: '4px'
-                        }}
-                      >
-                        <pre style={{ 
-                          whiteSpace: 'pre-wrap',
-                          wordWrap: 'break-word',
-                          fontFamily: 'Arial, sans-serif',
-                          fontSize: '14px',
-                          lineHeight: '1.5',
-                          margin: 0
-                        }}>
-                          {item.content}
-                        </pre>
-                      </div>
-                    ))}
-                </div>
+            <div className="template-preview-content">
+              {templateFiles.length > 0 ? (
+                previewItems
+                  .filter(item => item.type === 'template' || item.type === 'error')
+                  .map((item) => (
+                    <div
+                      key={item.id}
+                      className="template-preview-item"
+                    >
+                      <pre className="template-preview-pre">
+                        {item.content}
+                      </pre>
+                    </div>
+                  ))
               ) : (
                 <div className="preview-placeholder">
                   <h4>Template Information</h4>
@@ -614,50 +563,21 @@ const Reports = () => {
             <h3>Content Sequencing</h3>
             <div className="sequencing-content">
               {previewItems.length > 0 ? (
-                <div 
-                  style={{ 
-                    backgroundColor: '#f8f9fa',
-                    border: '1px solid #dee2e6',
-                    borderRadius: '4px',
-                    padding: '20px',
-                    height: '300px',
-                    overflowY: 'auto'
-                  }}
-                >
+                <div className="preview-items-container">
                   {previewItems.map((item, index) => (
-                    <div
+                    <div 
                       key={item.id}
+                      className={`preview-item ${draggedItem && draggedItem.id === item.id ? 'dragged' : ''}`}
                       draggable
                       onDragStart={(e) => handlePreviewDragStart(e, index)}
                       onDragOver={(e) => handlePreviewDragOver(e, index)}
                       onDrop={(e) => handlePreviewDrop(e, index)}
-                      style={{
-                        cursor: 'move',
-                        padding: '10px',
-                        margin: '5px 0',
-                        backgroundColor: draggedItem === index ? '#e9ecef' : 'white',
-                        border: '1px dashed #dee2e6',
-                        borderRadius: '4px',
-                        transition: 'background-color 0.2s',
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
                     >
-                      <div style={{ 
-                        marginRight: '10px',
-                        color: '#6c757d',
-                        fontSize: '14px',
-                        fontWeight: 'bold'
-                      }}>
+                      <div className="preview-item-number">
                         {item.id}.
                       </div>
-                      <div style={{
-                        flex: 1,
-                        fontFamily: 'Arial, sans-serif',
-                        fontSize: '14px',
-                        color: item.type === 'attachment' ? '#0d6efd' : '#212529'
-                      }}>
-                        {item.type === 'attachment' ? item.content : 'Template Content'}
+                      <div className={`preview-item-content ${item.type === 'attachment' ? 'attachment' : 'template'}`}>
+                        {item.type === 'template' ? 'Template Content' : item.content}
                       </div>
                     </div>
                   ))}
@@ -782,7 +702,7 @@ const Reports = () => {
       <button 
         className="submit-button"
         onClick={handleSubmit}
-        disabled={templateFiles.length === 0 || !sheetId || !!sheetError || isLoading || (!sendWhatsapp && !sendEmail)}
+        disabled={previewItems.filter(item => item.type === 'template').length === 0 || !sheetId || !!sheetError || isLoading || (!sendWhatsapp && !sendEmail)}
       >
         {isLoading ? 'Generating Reports...' : 'Generate Reports'}
       </button>

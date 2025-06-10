@@ -638,55 +638,77 @@
 }
 
 .preview-placeholder {
+  height: 100%; /* Ensure it fills the parent height */
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  min-height: 200px;
-  color: #495057;
-  text-align: left;
+  justify-content: center;
+  background-color: #f8f9fa;
+  border: 1px dashed #dee2e6;
+  border-radius: 4px;
   padding: 20px;
+  text-align: center;
+  min-height: 350px; /* Match the height of the content containers */
 }
 
 .preview-placeholder h4 {
+  margin-bottom: 8px; /* Reduced margin */
   color: #333;
-  margin: 0 0 15px 0;
-  font-size: 1.1rem;
-  font-weight: 500;
 }
 
 .preview-placeholder p {
-  margin: 10px 0;
-  line-height: 1.5;
+  color: #6c757d;
+  font-size: 1rem;
+  margin-bottom: 5px; /* Reduced margin */
 }
 
 .template-example {
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 4px;
-  padding: 15px;
-  margin: 15px 0;
-  width: 100%;
-  max-width: 500px;
+  background-color: #e9ecef;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  padding: 8px; /* Reduced padding */
+  margin-top: 8px; /* Reduced margin */
+  width: 90%;
+  max-width: 300px;
 }
 
 .template-example p {
-  margin: 0 0 10px 0;
-  font-weight: 500;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 3px; /* Reduced margin */
 }
 
 .template-example pre {
-  margin: 5px 0;
+  background-color: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  padding: 8px; /* Reduced padding */
   font-family: 'Courier New', Courier, monospace;
-  color: #495057;
   font-size: 0.9rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
 }
 
 .preview-hint {
   font-size: 0.9rem;
-  font-style: italic;
-  color: #adb5bd;
-  margin-top: 15px;
+  color: #6c757d;
+  margin-top: 8px; /* Reduced margin */
+}
+
+/* Content Sequencing Placeholder */
+.sequencing-placeholder {
+  height: 100%; /* Ensure it fills the parent height */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fa;
+  border: 1px dashed #dee2e6;
+  border-radius: 4px;
+  padding: 20px;
+  text-align: center;
+  min-height: 350px; /* Match the height of the content containers */
 }
 
 .preview-container {
@@ -712,13 +734,91 @@
   border-radius: 8px 8px 0 0;
 }
 
-.sequencing-placeholder {
+.preview-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* Space between preview items */
+}
+
+.preview-items-container {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 20px;
+  height: 350px; /* Fixed height for scrolling */
+  overflow-y: auto; /* Enable vertical scrolling */
+}
+
+.preview-item {
   display: flex;
   align-items: center;
-  justify-content: center;
-  height: 100%;
+  padding: 10px;
+  background-color: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  cursor: grab;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.preview-item.dragged {
+  background-color: #e9ecef;
+  border-color: #007bff;
+}
+
+.preview-item-number {
+  margin-right: 10px;
   color: #6c757d;
-  font-style: italic;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.preview-item-content {
+  flex: 1;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  color: #212529;
+}
+
+.preview-item-content.attachment {
+  color: #0d6efd; /* Blue for attachment files */
+}
+
+/* Ensure the template content also has some basic styling */
+.preview-item-content.template {
+  white-space: pre-wrap; /* Preserve whitespace and line breaks */
+  word-break: break-word;
+}
+
+/* Template Preview Section Styling */
+.template-preview-content {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 20px;
+  height: 350px; /* Fixed height for scrolling */
+  overflow-y: auto; /* Enable vertical scrolling */
+}
+
+.template-preview-item {
+  padding: 10px;
+  margin: 5px 0;
+  background-color: white;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  color: #212529;
+}
+
+.template-preview-item.error {
+  color: #dc3545;
+}
+
+.template-preview-pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
 }
 
 .full-width-input-group {
@@ -747,4 +847,176 @@
   outline: none;
   border-color: #007bff;
   box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+}
+
+.sequencing-section h3 {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.sequencing-content {
+  margin-top: 15px;
+  height: 350px; /* Ensure consistent height with template preview */
+  overflow-y: auto; /* Enable scrolling if content exceeds height */
+}
+
+/* Preview Section Styling */
+.preview-area {
+  flex: 1;
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  min-height: 200px; /* Ensure it has some height */
+}
+
+.preview-area h4 {
+  margin-bottom: 10px;
+  color: #333;
+  text-align: center;
+}
+
+.preview-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* Space between preview items */
+}
+
+.preview-items-container {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 20px;
+  height: 350px; /* Fixed height for scrolling */
+  overflow-y: auto; /* Enable vertical scrolling */
+}
+
+.preview-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background-color: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  cursor: grab;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.preview-item.dragged {
+  background-color: #e9ecef;
+  border-color: #007bff;
+}
+
+.preview-item-number {
+  margin-right: 10px;
+  color: #6c757d;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.preview-item-content {
+  flex: 1;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  color: #212529;
+}
+
+.preview-item-content.attachment {
+  color: #0d6efd; /* Blue for attachment files */
+}
+
+/* Ensure the template content also has some basic styling */
+.preview-item-content.template {
+  white-space: pre-wrap; /* Preserve whitespace and line breaks */
+  word-break: break-word;
+}
+
+/* Template Preview Section Styling */
+.template-preview-content {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 20px;
+  height: 350px; /* Fixed height for scrolling */
+  overflow-y: auto; /* Enable vertical scrolling */
+}
+
+.template-preview-item {
+  padding: 10px;
+  margin: 5px 0;
+  background-color: white;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  color: #212529;
+}
+
+.template-preview-item.error {
+  color: #dc3545;
+}
+
+.template-preview-pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.preview-placeholder {
+  height: 100%; /* Ensure it fills the parent height */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fa;
+  border: 1px dashed #dee2e6;
+  border-radius: 4px;
+  padding: 20px;
+  text-align: center;
+  min-height: 350px; /* Match the height of the content containers */
+}
+
+.preview-placeholder h4 {
+  margin-bottom: 8px; /* Reduced margin */
+  color: #333;
+}
+
+.preview-placeholder p {
+  color: #6c757d;
+  font-size: 1rem;
+  margin-bottom: 5px; /* Reduced margin */
+}
+
+.template-example {
+  background-color: #e9ecef;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  padding: 8px; /* Reduced padding */
+  margin-top: 8px; /* Reduced margin */
+  width: 90%;
+  max-width: 300px;
+}
+
+.template-example p {
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 3px; /* Reduced margin */
+}
+
+.template-example pre {
+  background-color: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  padding: 8px; /* Reduced padding */
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+.preview-hint {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-top: 8px; /* Reduced margin */
 }
