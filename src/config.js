@@ -75,9 +75,10 @@ export const getCurrentBackendUrl = () => {
 // Common API endpoints
 export const ENDPOINTS = {
     // Auth endpoints
-    LOGIN: 'auth/login',
+    GOOGLE_AUTH: 'auth/google',
+    GOOGLE_CALLBACK: 'auth/google/callback',
     LOGOUT: 'auth/logout',
-    VERIFY_TOKEN: 'auth/verify',
+    AUTH_STATUS: 'auth/status',
     
     // Salary slip endpoints
     SINGLE_SLIP: 'generate-salary-slip-single',

@@ -1,6 +1,91 @@
 import React, { useState, useEffect } from 'react';
 import { setLocalBackendUrl, getCurrentBackendUrl } from '../config';
-import './BackendConfig.css';
+import styled from 'styled-components';
+
+const Container = styled.div`
+  padding: 1rem;
+  margin: 1rem 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+`;
+
+const CurrentConfig = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+`;
+
+const ConfigToggle = styled.button`
+  padding: 0.5rem 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #0056b3;
+  }
+`;
+
+const ConfigForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const FormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const Label = styled.label`
+  font-weight: bold;
+`;
+
+const Input = styled.input`
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 1rem;
+`;
+
+const SaveButton = styled.button`
+  padding: 0.5rem 1rem;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #218838;
+  }
+`;
+
+const ResetButton = styled.button`
+  padding: 0.5rem 1rem;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #c82333;
+  }
+`;
 
 const BackendConfig = () => {
     const [localUrl, setLocalUrl] = useState('');
@@ -34,22 +119,19 @@ const BackendConfig = () => {
     };
 
     return (
-        <div className="backend-config">
-            <div className="current-config">
+        <Container>
+            <CurrentConfig>
                 <p>Current Backend URL: {currentUrl}</p>
-                <button 
-                    onClick={() => setIsConfiguring(!isConfiguring)}
-                    className="config-toggle"
-                >
+                <ConfigToggle onClick={() => setIsConfiguring(!isConfiguring)}>
                     {isConfiguring ? 'Cancel' : 'Configure Backend URL'}
-                </button>
-            </div>
+                </ConfigToggle>
+            </CurrentConfig>
 
             {isConfiguring && (
-                <form onSubmit={handleSubmit} className="config-form">
-                    <div className="form-group">
-                        <label htmlFor="localUrl">Backend URL:</label>
-                        <input
+                <ConfigForm onSubmit={handleSubmit}>
+                    <FormGroup>
+                        <Label htmlFor="localUrl">Backend URL:</Label>
+                        <Input
                             type="text"
                             id="localUrl"
                             value={localUrl}
@@ -57,22 +139,18 @@ const BackendConfig = () => {
                             placeholder="http://localhost:5000"
                             required
                         />
-                    </div>
-                    <div className="button-group">
-                        <button type="submit" className="save-button">
+                    </FormGroup>
+                    <ButtonGroup>
+                        <SaveButton type="submit">
                             Save Configuration
-                        </button>
-                        <button 
-                            type="button" 
-                            onClick={handleReset}
-                            className="reset-button"
-                        >
+                        </SaveButton>
+                        <ResetButton type="button" onClick={handleReset}>
                             Reset to Default
-                        </button>
-                    </div>
-                </form>
+                        </ResetButton>
+                    </ButtonGroup>
+                </ConfigForm>
             )}
-        </div>
+        </Container>
     );
 };
 
