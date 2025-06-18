@@ -11,7 +11,6 @@ const Reports = () => {
   const [sheetName, setSheetName] = useState('');
   const [sheetError, setSheetError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [sendWhatsapp, setSendWhatsapp] = useState(false);
   const [sendEmail, setSendEmail] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
@@ -348,8 +347,8 @@ const Reports = () => {
       return;
     }
 
-    if (!sendWhatsapp && !sendEmail) {
-      alert('Please select at least one notification method (WhatsApp or Email)');
+    if (!sendEmail) {
+      alert('Please select at least one notification method (Email)');
       return;
     }
 
@@ -383,7 +382,6 @@ const Reports = () => {
       // Add other required data
       formData.append('sheet_id', sheetId);
       formData.append('sheet_name', sheetName);
-      formData.append('send_whatsapp', sendWhatsapp);
       formData.append('send_email', sendEmail);
       formData.append('mail_subject', mailSubject);
 
@@ -419,7 +417,6 @@ const Reports = () => {
       setAttachmentFiles([]);
       setSheetId('');
       setSheetName('');
-      setSendWhatsapp(false);
       setSendEmail(false);
       setMailSubject('');
       setPreviewItems([]);
@@ -723,24 +720,13 @@ const Reports = () => {
             </label>
             <span className="toggle-label">Send via Email</span>
           </div>
-          <div className="toggle-item">
-            <label className="toggle">
-              <input
-                type="checkbox"
-                checked={sendWhatsapp}
-                onChange={(e) => setSendWhatsapp(e.target.checked)}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-            <span className="toggle-label">Send via WhatsApp</span>
-          </div>
         </div>
       </div>
 
       <button 
         className="submit-button"
         onClick={handleSubmit}
-        disabled={previewItems.filter(item => item.file_type === 'message').length === 0 || !sheetId || !!sheetError || isLoading || (!sendWhatsapp && !sendEmail)}
+        disabled={previewItems.filter(item => item.file_type === 'message').length === 0 || !sheetId || !!sheetError || isLoading || !sendEmail}
       >
         {isLoading ? 'Generating Reports...' : 'Generate Reports'}
       </button>

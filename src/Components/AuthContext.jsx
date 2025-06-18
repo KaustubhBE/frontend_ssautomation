@@ -44,8 +44,11 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      localStorage.removeItem('user');
+      localStorage.removeItem('isAuthenticated');
       setUser(null);
       setIsAuthenticated(false);
+      window.location.replace('/login');
     }
   }, []);
 

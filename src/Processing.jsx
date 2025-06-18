@@ -397,13 +397,6 @@ function Processing({ mode = 'single' }) {
             )}
             
             <div className="option-select">
-              <div className='whatsappToggle' style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <label htmlFor="whatsappToggle" style={{ margin: 0 }}>WhatsApp Message: </label>
-                <ToggleButton
-                  isToggled={sendWhatsApp}
-                  onToggle={() => setSendWhatsApp((prev) => !prev)}
-                />
-              </div>
               <div className='emailToggle' style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <label htmlFor="emailToggle" style={{ margin: 0 }}>Email Message: </label>
                 <ToggleButton
