@@ -422,7 +422,7 @@ const Reports = () => {
       setPreviewItems([]);
       
       // Refresh the page after successful submission
-      // window.location.reload();
+      window.location.reload();
       
     } catch (error) {
       console.error('Error generating reports:', error);
