@@ -46,18 +46,18 @@ function Login({ onLogin }) {
         timeout: 5000
       });
 
-      // If Google OAuth is required, redirect to auth_url
-      if (response.data?.auth_url) {
-        window.location.href = response.data.auth_url;
-        return;
-      }
-
-      // If user is fully authenticated (token exists), set auth state
+      // Check if we have a successful response with user data
       if (response.data?.success && response.data?.user) {
         const userData = response.data.user;
+        
+        // Store authentication data
         localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('isAuthenticated', 'true');
+        
+        // Update auth context
         login(userData);
+        
+        // Navigate to app
         navigate('/app', { replace: true });
       } else {
         throw new Error('Invalid response from server');

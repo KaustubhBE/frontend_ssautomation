@@ -422,7 +422,7 @@ const Reports = () => {
       setPreviewItems([]);
       
       // Refresh the page after successful submission
-      window.location.reload();
+      // window.location.reload();
       
     } catch (error) {
       console.error('Error generating reports:', error);
@@ -726,7 +726,7 @@ const Reports = () => {
       <button 
         className="submit-button"
         onClick={handleSubmit}
-        disabled={previewItems.filter(item => item.file_type === 'message').length === 0 || !sheetId || !!sheetError || isLoading || !sendEmail}
+        disabled={previewItems.filter(item => item.file_type === 'message').length === 0 || !sheetId || !!sheetError || isLoading || (!sendEmail)}
       >
         {isLoading ? 'Generating Reports...' : 'Generate Reports'}
       </button>

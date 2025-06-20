@@ -141,7 +141,6 @@ const getFinancialYears = () => {
 };
 
 function Processing({ mode = 'single' }) {
-  const [sendWhatsApp, setSendWhatsApp] = useState(false);
   const [sendEmail, setSendEmail] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedPlant, setSelectedPlant] = useState('');
@@ -156,7 +155,6 @@ function Processing({ mode = 'single' }) {
     month: prevMonth.month,
     financialYear: prevMonth.financialYear
   }]);
-  const [whatsappMessage, setWhatsappMessage] = useState('');
   const [emailMessage, setEmailMessage] = useState('');
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
@@ -244,9 +242,7 @@ function Processing({ mode = 'single' }) {
         full_month: monthsData[0].month,
         full_year: monthsData[0].year,
         months_data: monthsData,
-        whatsapp_message: whatsappMessage,
         email_message: emailMessage,
-        send_whatsapp: sendWhatsApp,
         send_email: sendEmail,
         attachment_sequence: attachmentSequence
       };

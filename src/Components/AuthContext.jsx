@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
-import { getApiUrl } from '../config';
+import storage from '../utils/storage';
 
 const AuthContext = createContext(null);
 
@@ -9,60 +8,47 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const checkAuthStatus = useCallback(async () => {
-    try {
-      const response = await axios.get(getApiUrl('auth/status'), {
-        withCredentials: true
-      });
-      
-      if (response.data?.authenticated && response.data?.user) {
-        setUser(response.data.user);
-        setIsAuthenticated(true);
-      } else {
-        setUser(null);
-        setIsAuthenticated(false);
-      }
-    } catch (error) {
-      console.error('Auth status check failed:', error);
-      setUser(null);
-      setIsAuthenticated(false);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   const login = useCallback((userData) => {
     setUser(userData);
     setIsAuthenticated(true);
+    storage.setJSON('user', userData);
+    storage.set('isAuthenticated', 'true');
   }, []);
 
-  const logout = useCallback(async () => {
-    try {
-      await axios.post(getApiUrl('auth/logout'), {}, {
-        withCredentials: true
-      });
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      localStorage.removeItem('user');
-      localStorage.removeItem('isAuthenticated');
-      setUser(null);
-      setIsAuthenticated(false);
-      window.location.replace('/login');
-    }
+  const logout = useCallback(() => {
+    storage.remove('user');
+    storage.remove('isAuthenticated');
+    setUser(null);
+    setIsAuthenticated(false);
   }, []);
 
   useEffect(() => {
-    checkAuthStatus();
-  }, [checkAuthStatus]);
+    const initializeAuth = () => {
+      try {
+        const userData = storage.getJSON('user');
+        const isAuth = storage.get('isAuthenticated') === 'true';
+        
+        if (userData && isAuth) {
+          setUser(userData);
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        logout();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
+  }, [logout]);
 
   const contextValue = React.useMemo(() => ({
     user,
     isAuthenticated,
     login,
-    logout,
-    checkAuthStatus
-  }), [user, isAuthenticated, login, logout, checkAuthStatus]);
+    logout
+  }), [user, isAuthenticated, login, logout]);
 
   if (loading) {
     return <div>Loading...</div>;
